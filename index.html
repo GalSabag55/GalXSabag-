@@ -76,13 +76,27 @@ a{color:inherit;text-decoration:none}
   .topbar .name{position:static;transform:none}
 }
 
-/* ================= אמירה פותחת ================= */
+/* ================= הירו עם גרדיאנט אנימטיבי (breathing) ================= */
 .statement{
-  min-height:auto;
+  position:relative;overflow:hidden;
+  min-height:600px;
   display:grid;place-items:center;
-  padding:130px 28px 130px;
+  padding:150px 28px 120px;
   text-align:center;
 }
+/* שכבת הגרדיאנט הנושם - נצבעת דינמית ב-JS. כניסה עם fade+scale כמו במקור. */
+.hero-grad{
+  position:absolute;inset:0;z-index:0;
+  animation:gradIn 2s cubic-bezier(.25,.1,.25,1) both;
+}
+@keyframes gradIn{from{opacity:0;transform:scale(1.5)}to{opacity:1;transform:none}}
+/* דעיכה עדינה בתחתית - ההירו נמס אל תוך הנייר של הגלריה */
+.statement::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:130px;z-index:1;
+  background:linear-gradient(to bottom, rgba(250,250,249,0), #FAFAF9);
+  pointer-events:none;
+}
+.hero-content{position:relative;z-index:1}
 .statement p{
   font-size:clamp(15px,1.35vw,18px);
   font-weight:400;letter-spacing:-.024em;
@@ -385,8 +399,11 @@ footer .row{display:flex;gap:18px;flex-wrap:wrap}
   Junior enough to try anything. Stubborn enough to finish it.
 -->
 <section class="statement">
-  <p><span class="role">Art Director</span></p>
-  <p class="slogan">I help companies <span class="hl">thrive</span>.</p>
+  <div class="hero-grad" id="heroGrad"></div>
+  <div class="hero-content">
+    <p><span class="role">Art Director</span></p>
+    <p class="slogan">I help companies <span class="hl">thrive</span>.</p>
+  </div>
 </section>
 
 <!-- ================= גלריה ================= -->
@@ -648,6 +665,35 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ shutInfo(); clos
 
 /* ============ פריסה ראשונית ============ */
 layout('cols');
+</script>
+<script>
+/* ===== רקע גרדיאנט רדיאלי אנימטיבי (breathing) =====
+   מימוש vanilla JS של הקומפוננטה מ-21st.dev, מותאם לפלטת המותג הבהירה.
+   הטקסט של הכותרת יושב מעל השכבה הזו (במקום החתול שהיה במקור). */
+(function(){
+  const el=document.getElementById('heroGrad'); if(!el) return;
+  // פלטה רכה-חמה שמשתלבת עם הנייר: מרכז בהיר → זהב → אפרסק → ורד → סגול עדין → נייר
+  const colors=['#FBF7F0','#F7E3C2','#F3CBA0','#EFB0AE','#EC9EC2','#F2C6DC','#FBF7F0'];
+  const stops =[20,38,52,63,74,86,100];
+  const startingGap=125, breathingRange=11, speed=0.09, topOffset=0;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function paint(width){
+    const s=stops.map((st,i)=>colors[i]+' '+st+'%').join(', ');
+    el.style.background='radial-gradient('+width+'% '+(width+topOffset)+'% at 50% 20%, '+s+')';
+  }
+
+  if(reduce){ paint(startingGap); return; }   // כיבוד העדפת תנועה מופחתת - סטטי
+  let width=startingGap, dir=1, raf;
+  function frame(){
+    if(width>=startingGap+breathingRange) dir=-1;
+    if(width<=startingGap-breathingRange) dir=1;
+    width+=dir*speed;
+    paint(width);
+    raf=requestAnimationFrame(frame);
+  }
+  frame();
+})();
 </script>
 </body>
 </html>
